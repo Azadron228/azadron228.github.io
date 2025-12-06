@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --success: #10b981;
+            --error: #ef4444;
+            --border: #e5e7eb;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
+        body { background-color: var(--bg); color: var(--text); padding-bottom: 40px; }
+
+        /* Layout & Typography */
+        header { background: var(--card-bg); padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        h1 { font-size: 1.25rem; font-weight: 700; color: var(--primary); }
+        h2 { font-size: 1.5rem; margin-bottom: 1rem; }
+        h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        
+        .container { max-width: 800px; margin: 0 auto; padding: 1rem; }
+        .hidden { display: none !important; }
+        
+        /* Buttons */
+        .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; border: none; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-outline:hover { background: var(--bg); }
+        .btn-icon { background: transparent; font-size: 1.2rem; cursor: pointer; border: none; }
+
+        /* Card Styles */
+        .card { background: var(--card-bg); padding: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 1rem; }
+        
+        /* Dashboard / Test List */
+        .upload-zone { border: 2px dashed var(--border); padding: 2rem; text-align: center; border-radius: 0.5rem; cursor: pointer; margin-bottom: 2rem; }
+        .upload-zone:hover { border-color: var(--primary); background: #eff6ff; }
+        
+        .test-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border); }
+        .test-item:last-child { border-bottom: none; }
+        .test-actions { display: flex; gap: 0.5rem; }
+        
+        /* Settings */
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+        input[type="number"] { width: 80px; padding: 0.25rem; }
+
+        /* Quiz Interface */
+        .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 1.5rem; }
+        .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+        
+        .question-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; line-height: 1.5; }
+        
+        .variants-list { display: flex; flex-direction: column; gap: 0.75rem; }
+        .variant-btn { text-align: left; padding: 1rem; border: 1px solid var(--border); background: var(--card-bg); border-radius: 0.5rem; cursor: pointer; transition: all 0.2s; }
+        .variant-btn:hover { background: var(--bg); border-color: var(--primary); }
+        
+        .variant-btn.correct { background: #d1fae5; border-color: var(--success); color: #065f46; }
+        .variant-btn.incorrect { background: #fee2e2; border-color: var(--error); color: #991b1b; }
+        .variant-btn.disabled { pointer-events: none; opacity: 0.7; }
+
+        .quiz-controls { margin-top: 1.5rem; display: flex; justify-content: space-between; }
+
+        /* History */
+        .history-item { font-size: 0.9rem; color: var(--text-light); margin-top: 0.25rem; }
+
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 200; }
+        .modal { background: var(--card-bg); padding: 2rem; border-radius: 0.5rem; width: 90%; max-width: 500px; }
+        .chunk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem; margin-top: 1rem; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 onclick="app.navigate('home')" style="cursor: pointer;">Test</h1>
+        <nav>
+            <button class="btn btn-outline" onclick="app.navigate('settings')">Settings</button>
+            <button class="btn btn-primary" onclick="app.navigate('home')">Tests</button>
+        </nav>
+    </header>
+
+    <div id="app" class="container">
+        
+        <section id="view-home">
+            <div class="card upload-zone" onclick="document.getElementById('fileInput').click()">
+                <h3>Click to Upload Test Files</h3>
+                <p style="color: var(--text-light)">Format: &lt;question&gt;...&lt;variant&gt;...</p>
+                <input type="file" id="fileInput" multiple accept=".txt,.html,.xml" style="display: none" onchange="app.handleFileUpload(this)">
+            </div>
+
+            <div class="card">
+                <h2>My Tests</h2>
+                <div id="test-list-container">
+                    <p style="text-align: center; color: var(--text-light); padding: 1rem;">No tests uploaded yet.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-settings" class="hidden">
+            <div class="card">
+                <h2>Global Settings</h2>
+                
+                <div class="setting-row">
+                    <label>Questions per Cram Chunk</label>
+                    <input type="number" id="setting-cram-size" value="60" min="10">
+                </div>
+                
+                <div class="setting-row">
+                    <label>Questions in Test Mode</label>
+                    <input type="number" id="setting-test-size" value="30" min="5">
+                </div>
+                
+                <div class="setting-row">
+                    <label>Shuffle Variants</label>
+                    <input type="checkbox" id="setting-shuffle-variants" checked>
+                </div>
+                
+                <div class="setting-row">
+                    <label>Show Answer Immediately</label>
+                    <input type="checkbox" id="setting-instant-feedback" checked>
+                </div>
+
+                <div style="margin-top: 1.5rem; text-align: right;">
+                    <button class="btn btn-primary" onclick="app.saveSettings()">Save Settings</button>
+                    <button class="btn btn-outline" onclick="app.clearData()">Clear All Data</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-quiz" class="hidden">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span id="quiz-mode-label" style="font-weight: bold; color: var(--primary);">Mode</span>
+                    <span id="quiz-counter">1 / 30</span>
+                </div>
+                
+                <div class="progress-bar">
+                    <div id="quiz-progress" class="progress-fill"></div>
+                </div>
+
+                <div id="question-container">
+                    <div id="question-text" class="question-text">Loading...</div>
+                    <div id="variants-container" class="variants-list">
+                        </div>
+                </div>
+
+                <div class="quiz-controls">
+                    <button class="btn btn-outline" onclick="app.quitQuiz()">Quit</button>
+                    <button id="btn-next" class="btn btn-primary hidden" onclick="app.nextQuestion()">Next Question</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-results" class="hidden">
+            <div class="card" style="text-align: center; padding: 3rem;">
+                <h2>Test Complete!</h2>
+                <h1 style="font-size: 3rem; color: var(--primary); margin: 1rem 0;" id="result-score">85%</h1>
+                <p id="result-details" style="margin-bottom: 2rem;">You got 25 out of 30 correct.</p>
+                <button class="btn btn-primary" onclick="app.navigate('home')">Back to Home</button>
+            </div>
+        </section>
+
+    </div>
+
+    <div id="modal-chunk" class="modal-overlay hidden">
+        <div class="modal">
+            <h3>Select a Study Chunk</h3>
+            <p>This test is large. Select a range to study:</p>
+            <div id="chunk-list" class="chunk-grid"></div>
+            <div style="margin-top: 1rem; text-align: right;">
+                <button class="btn btn-outline" onclick="document.getElementById('modal-chunk').classList.add('hidden')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+/**
+ * APP LOGIC
+ */
+const app = {
+    // State
+    data: {
+        tests: [], // { id, name, questions: [] }
+        history: [], // { testId, score, total, date, mode }
+    },
+    settings: {
+        cramSize: 60,
+        testSize: 30,
+        shuffleVariants: true,
+        instantFeedback: true
+    },
+    currentSession: {
+        questions: [], // Active set of questions
+        currentIndex: 0,
+        score: 0,
+        answers: [], // Track user answers
+        mode: '', // 'cram' or 'test'
+        testId: null
+    },
+
+    /**
+     * Initialization
+     */
+    init: function() {
+        this.loadFromStorage();
+        this.renderTestList();
+        this.populateSettings();
+    },
+
+    loadFromStorage: function() {
+        const savedData = localStorage.getItem('studyflow_data');
+        const savedSettings = localStorage.getItem('studyflow_settings');
+        
+        if (savedData) this.data = JSON.parse(savedData);
+        if (savedSettings) this.settings = JSON.parse(savedSettings);
+    },
+
+    saveStorage: function() {
+        localStorage.setItem('studyflow_data', JSON.stringify(this.data));
+        localStorage.setItem('studyflow_settings', JSON.stringify(this.settings));
+    },
+
+    clearData: function() {
+        if(confirm("Are you sure? This will delete all tests and history.")) {
+            localStorage.removeItem('studyflow_data');
+            location.reload();
+        }
+    },
+
+    /**
+     * File Parsing & Upload
+     */
+    handleFileUpload: function(input) {
+        const files = Array.from(input.files);
+        if (files.length === 0) return;
+
+        let processedCount = 0;
+
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target.result;
+                const questions = this.parseFileContent(content);
+                
+                if (questions.length > 0) {
+                    const newTest = {
+                        id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                        name: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
+                        questions: questions,
+                        dateAdded: Date.now()
+                    };
+                    this.data.tests.push(newTest);
+                }
+
+                processedCount++;
+                if (processedCount === files.length) {
+                    this.saveStorage();
+                    this.renderTestList();
+                    //alert(`Successfully imported ${processedCount} file(s).`);
+                }
+            };
+            reader.readAsText(file);
+        });
+        
+        input.value = ''; // Reset input
+    },
+
+    parseFileContent: function(text) {
+        // Regex to find content between <question> and start of variants, then capture variants
+        // This splits by <question> tag
+        const rawBlocks = text.split(/<question>/i);
+        const parsedQuestions = [];
+
+        rawBlocks.forEach(block => {
+            if (!block.trim()) return;
+
+            // Split into lines or process by tag
+            // We assume format: Text... <variant> Text... <variant> Text...
+            
+            const variantSplit = block.split(/<variant>/i);
+            const questionText = variantSplit[0].trim();
+            const variantsRaw = variantSplit.slice(1);
+
+            if (questionText && variantsRaw.length > 0) {
+                const variants = variantsRaw.map((v, index) => {
+                    return {
+                        text: v.trim(),
+                        isCorrect: index === 0 // Requirement: First variant is always correct
+                    };
+                });
+
+                parsedQuestions.push({
+                    q: questionText,
+                    v: variants
+                });
+            }
+        });
+
+        return parsedQuestions;
+    },
+
+    /**
+     * UI Rendering
+     */
+    renderTestList: function() {
+        const container = document.getElementById('test-list-container');
+        container.innerHTML = '';
+
+        if (this.data.tests.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 1rem;">No tests uploaded yet.</p>';
+            return;
+        }
+
+        this.data.tests.forEach(test => {
+            const history = this.data.history.filter(h => h.testId === test.id);
+            const lastAttempt = history.length ? history[history.length - 1] : null;
+            
+            const div = document.createElement('div');
+            div.className = 'test-item';
+            div.innerHTML = `
+                <div>
+                    <h3>${test.name}</h3>
+                    <div style="font-size: 0.9rem; color: var(--text-light)">
+                        ${test.questions.length} Questions 
+                        ${lastAttempt ? `| Last score: ${Math.round((lastAttempt.score/lastAttempt.total)*100)}%` : ''}
+                    </div>
+                </div>
+                <div class="test-actions">
+                    <button class="btn btn-outline" onclick="app.prepCram('${test.id}')">Cram</button>
+                    <button class="btn btn-primary" onclick="app.prepTest('${test.id}')">Test</button>
+                    <button class="btn btn-icon" style="color:var(--error)" onclick="app.deleteTest('${test.id}')">&times;</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    },
+
+    deleteTest: function(id) {
+        if(confirm("Delete this test?")) {
+            this.data.tests = this.data.tests.filter(t => t.id !== id);
+            this.data.history = this.data.history.filter(h => h.testId !== id);
+            this.saveStorage();
+            this.renderTestList();
+        }
+    },
+
+    /**
+     * Settings Logic
+     */
+    populateSettings: function() {
+        document.getElementById('setting-cram-size').value = this.settings.cramSize;
+        document.getElementById('setting-test-size').value = this.settings.testSize;
+        document.getElementById('setting-shuffle-variants').checked = this.settings.shuffleVariants;
+        document.getElementById('setting-instant-feedback').checked = this.settings.instantFeedback;
+    },
+
+    saveSettings: function() {
+        this.settings.cramSize = parseInt(document.getElementById('setting-cram-size').value);
+        this.settings.testSize = parseInt(document.getElementById('setting-test-size').value);
+        this.settings.shuffleVariants = document.getElementById('setting-shuffle-variants').checked;
+        this.settings.instantFeedback = document.getElementById('setting-instant-feedback').checked;
+        
+        this.saveStorage();
+        //alert("Settings saved!");
+        this.navigate('home');
+    },
+
+    /**
+     * Quiz Preparation Logic
+     */
+    prepCram: function(testId) {
+        const test = this.data.tests.find(t => t.id === testId);
+        if (!test) return;
+
+        const totalQ = test.questions.length;
+        const chunkSize = this.settings.cramSize;
+        const chunks = Math.ceil(totalQ / chunkSize);
+
+        if (chunks <= 1) {
+            // Only one chunk, start immediately
+            this.startSession(testId, test.questions, 'cram');
+            return;
+        }
+
+        // Show Modal for chunks
+        const list = document.getElementById('chunk-list');
+        list.innerHTML = '';
+        for (let i = 0; i < chunks; i++) {
+            const start = i * chunkSize;
+            const end = Math.min((i + 1) * chunkSize, totalQ);
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-outline';
+            btn.innerText = `Q ${start + 1} - ${end}`;
+            btn.onclick = () => {
+                const subset = test.questions.slice(start, end);
+                document.getElementById('modal-chunk').classList.add('hidden');
+                this.startSession(testId, subset, 'cram');
+            };
+            list.appendChild(btn);
+        }
+        document.getElementById('modal-chunk').classList.remove('hidden');
+    },
+
+    prepTest: function(testId) {
+        const test = this.data.tests.find(t => t.id === testId);
+        if (!test) return;
+
+        // Shuffle all questions, then take top N
+        let pool = [...test.questions];
+        this.shuffleArray(pool);
+        const subset = pool.slice(0, Math.min(this.settings.testSize, pool.length));
+
+        this.startSession(testId, subset, 'test');
+    },
+
+    startSession: function(testId, questions, mode) {
+        this.currentSession = {
+            testId: testId,
+            questions: JSON.parse(JSON.stringify(questions)), // Deep copy to avoid mutating original
+            currentIndex: 0,
+            score: 0,
+            answers: new Array(questions.length).fill(null),
+            mode: mode
+        };
+
+        this.navigate('quiz');
+        this.renderQuestion();
+    },
+
+    /**
+     * Quiz Execution Logic
+     */
+    renderQuestion: function() {
+        const session = this.currentSession;
+        const qData = session.questions[session.currentIndex];
+        
+        // Update Header
+        document.getElementById('quiz-mode-label').innerText = session.mode === 'cram' ? 'Cram Mode' : 'Test Mode';
+        document.getElementById('quiz-counter').innerText = `${session.currentIndex + 1} / ${session.questions.length}`;
+        document.getElementById('quiz-progress').style.width = `${((session.currentIndex) / session.questions.length) * 100}%`;
+
+        // Render Question Text
+        document.getElementById('question-text').innerText = qData.q;
+
+        // Render Variants
+        const vContainer = document.getElementById('variants-container');
+        vContainer.innerHTML = '';
+
+        // Clone variants to shuffle if needed, without losing "isCorrect" flag
+        let variants = [...qData.v];
+        if (this.settings.shuffleVariants) {
+            this.shuffleArray(variants);
+        }
+
+        variants.forEach((v, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'variant-btn';
+            btn.innerText = v.text;
+            // Store isCorrect in data attribute to check later
+            btn.dataset.isCorrect = v.isCorrect;
+            btn.onclick = (e) => this.handleAnswer(e.target, v.isCorrect);
+            vContainer.appendChild(btn);
+        });
+
+        document.getElementById('btn-next').classList.add('hidden');
+    },
+
+    handleAnswer: function(btnElement, isCorrect) {
+        const session = this.currentSession;
+        
+        // Prevent multiple answers if already answered
+        if (session.answers[session.currentIndex] !== null) return;
+
+        session.answers[session.currentIndex] = isCorrect;
+        if (isCorrect) session.score++;
+
+        // --- NEW LOGIC START: Re-insert incorrect questions in Cram Mode ---
+        if (!isCorrect && session.mode === 'cram') {
+            const currentQ = session.questions[session.currentIndex];
+            
+            // Calculate where to insert the question
+            // We want it at least 2 steps ahead (if possible), but not past the end
+            const remainingQuestions = session.questions.length - (session.currentIndex + 1);
+            let insertIndex;
+
+            if (remainingQuestions <= 0) {
+                // If this was the last question, append to end
+                insertIndex = session.questions.length;
+            } else {
+                // Insert randomly between (Current + 2) and (End of Array)
+                // This creates a "buffer" so they don't see it immediately
+                const minOffset = 2; 
+                const maxOffset = remainingQuestions;
+                
+                // Ensure min isn't larger than max (if only 1 question left)
+                const safeMin = Math.min(minOffset, maxOffset);
+                
+                const randomOffset = Math.floor(Math.random() * (maxOffset - safeMin + 1)) + safeMin;
+                insertIndex = session.currentIndex + 1 + randomOffset;
+            }
+
+            // Insert the question copy into the array
+            session.questions.splice(insertIndex, 0, currentQ);
+            
+            // Insert a placeholder in the answers array to keep indices synced
+            session.answers.splice(insertIndex, 0, null);
+
+            // Optional: Update the counter immediately to show the user the test got longer
+            document.getElementById('quiz-counter').innerText = `${session.currentIndex + 1} / ${session.questions.length}`;
+            
+            console.log(`Incorrect answer. Question re-queued at index ${insertIndex}`);
+        }
+        // --- NEW LOGIC END ---
+
+        const buttons = document.querySelectorAll('.variant-btn');
+
+        if (this.settings.instantFeedback) {
+            // Visual Feedback
+            if (isCorrect) {
+                btnElement.classList.add('correct');
+            } else {
+                btnElement.classList.add('incorrect');
+                // Highlight the correct one
+                buttons.forEach(b => {
+                    if (b.dataset.isCorrect === "true") b.classList.add('correct');
+                });
+            }
+            
+            // Disable all buttons
+            buttons.forEach(b => b.classList.add('disabled'));
+            
+            // Show Next Button
+            document.getElementById('btn-next').classList.remove('hidden');
+        } else {
+            // Test Mode (Delayed Feedback) style
+            btnElement.style.borderColor = "var(--primary)";
+            btnElement.style.borderWidth = "2px";
+            buttons.forEach(b => b.classList.add('disabled'));
+            document.getElementById('btn-next').classList.remove('hidden');
+        }
+    },
+
+    nextQuestion: function() {
+        if (this.currentSession.currentIndex < this.currentSession.questions.length - 1) {
+            this.currentSession.currentIndex++;
+            this.renderQuestion();
+        } else {
+            this.finishQuiz();
+        }
+    },
+
+    finishQuiz: function() {
+        const session = this.currentSession;
+        const percentage = Math.round((session.score / session.questions.length) * 100);
+        
+        // Save History
+        this.data.history.push({
+            testId: session.testId,
+            score: session.score,
+            total: session.questions.length,
+            date: Date.now(),
+            mode: session.mode
+        });
+        this.saveStorage();
+
+        // Render Results
+        document.getElementById('result-score').innerText = `${percentage}%`;
+        document.getElementById('result-details').innerText = `You got ${session.score} out of ${session.questions.length} correct.`;
+        
+        this.navigate('results');
+    },
+
+    quitQuiz: function() {
+        if(confirm("Quit current session? Progress will be lost.")) {
+            this.navigate('home');
+        }
+    },
+
+    /**
+     * Utilities
+     */
+    navigate: function(viewName) {
+        ['home', 'settings', 'quiz', 'results'].forEach(v => {
+            const el = document.getElementById(`view-${v}`);
+            if (v === viewName) el.classList.remove('hidden');
+            else el.classList.add('hidden');
+        });
+        
+        if (viewName === 'home') this.renderTestList();
+    },
+
+    shuffleArray: function(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+};
+
+// Start the App
+window.addEventListener('DOMContentLoaded', () => {
+    app.init();
+});
+
+</script>
+</body>
+</html>
