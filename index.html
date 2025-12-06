@@ -48,7 +48,17 @@
         .test-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border); }
         .test-item:last-child { border-bottom: none; }
         .test-actions { display: flex; gap: 0.5rem; }
-        
+
+        .test-title {
+            display: -webkit-box;
+            -webkit-line-clamp: 3; /* max lines */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: break-word; /* wrap long words */
+            margin-right: 1rem;
+        }
+
         /* Settings */
         .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
         input[type="number"] { width: 80px; padding: 0.25rem; }
@@ -328,7 +338,7 @@ const app = {
             div.className = 'test-item';
             div.innerHTML = `
                 <div>
-                    <h3>${test.name}</h3>
+                    <h3 class="test-title">${test.name}</h3>
                     <div style="font-size: 0.9rem; color: var(--text-light)">
                         ${test.questions.length} Questions 
                         ${lastAttempt ? `| Last score: ${Math.round((lastAttempt.score/lastAttempt.total)*100)}%` : ''}
