@@ -84,8 +84,16 @@
 
         /* Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 200; }
-        .modal { background: var(--card-bg); padding: 2rem; border-radius: 0.5rem; width: 90%; max-width: 500px; }
+        .modal { background: var(--card-bg); padding: 2rem; border-radius: 0.5rem; width: 90%; max-width: 500px; display: flex; flex-direction: column; max-height: 85vh; }
         .chunk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem; margin-top: 1rem; max-height: 300px; overflow-y: auto; }
+
+        /* Error List Styles */
+        .error-list { margin-top: 1rem; overflow-y: auto; flex: 1; border: 1px solid #fee2e2; border-radius: 0.375rem; }
+        .error-item { padding: 0.75rem; border-bottom: 1px solid #fee2e2; background: #fef2f2; }
+        .error-item:last-child { border-bottom: none; }
+        .error-title { font-weight: bold; color: var(--error); font-size: 0.9rem; margin-bottom: 0.25rem; }
+        .error-context { font-family: monospace; font-size: 0.85rem; color: var(--text); background: rgba(255,255,255,0.5); padding: 0.25rem; border-radius: 0.25rem; }
+
     </style>
 </head>
 <body>
@@ -103,7 +111,7 @@
         <section id="view-home">
             <div class="card upload-zone" onclick="document.getElementById('fileInput').click()">
                 <h3>Click to Upload Test Files</h3>
-                <p style="color: var(--text-light)">Format: &lt;question&gt;...&lt;variant&gt;...</p>
+                <p style="color: var(--text-light)">Format: &lt;question&gt;...&lt;variant&gt;... (5 variants required)</p>
                 <input type="file" id="fileInput" multiple accept=".txt,.html,.xml" style="display: none" onchange="app.handleFileUpload(this)">
             </div>
 
@@ -192,6 +200,18 @@
         </div>
     </div>
 
+    <div id="modal-error" class="modal-overlay hidden">
+        <div class="modal" style="border-top: 4px solid var(--error);">
+            <h3 style="color: var(--error)">Upload Failed</h3>
+            <p id="error-intro-text">The file contained errors:</p>
+            <div id="error-list" class="error-list">
+                </div>
+            <div style="margin-top: 1rem; text-align: right;">
+                <button class="btn btn-primary" onclick="document.getElementById('modal-error').classList.add('hidden')">Close</button>
+            </div>
+        </div>
+    </div>
+
 <script>
 /**
  * APP LOGIC
@@ -254,29 +274,31 @@ const app = {
         if (files.length === 0) return;
 
         let processedCount = 0;
+        let hasErrors = false;
 
         files.forEach(file => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const content = e.target.result;
-                const questions = this.parseFileContent(content);
+                const result = this.parseFileContent(content);
                 
-                if (questions.length > 0) {
+                if (!result.success) {
+                    // Show Error Modal
+                    hasErrors = true;
+                    this.showErrors(file.name, result.errors);
+                } else if (result.data.length > 0) {
                     const newTest = {
                         id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
                         name: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
-                        questions: questions,
+                        questions: result.data,
                         dateAdded: Date.now()
                     };
                     this.data.tests.push(newTest);
+                    this.saveStorage();
+                    this.renderTestList();
                 }
 
                 processedCount++;
-                if (processedCount === files.length) {
-                    this.saveStorage();
-                    this.renderTestList();
-                    //alert(`Successfully imported ${processedCount} file(s).`);
-                }
             };
             reader.readAsText(file);
         });
@@ -285,37 +307,87 @@ const app = {
     },
 
     parseFileContent: function(text) {
-        // Regex to find content between <question> and start of variants, then capture variants
-        // This splits by <question> tag
         const rawBlocks = text.split(/<question>/i);
         const parsedQuestions = [];
+        const errors = [];
 
-        rawBlocks.forEach(block => {
+        rawBlocks.forEach((block, index) => {
             if (!block.trim()) return;
 
-            // Split into lines or process by tag
             // We assume format: Text... <variant> Text... <variant> Text...
-            
             const variantSplit = block.split(/<variant>/i);
             const questionText = variantSplit[0].trim();
             const variantsRaw = variantSplit.slice(1);
 
-            if (questionText && variantsRaw.length > 0) {
-                const variants = variantsRaw.map((v, index) => {
-                    return {
-                        text: v.trim(),
-                        isCorrect: index === 0 // Requirement: First variant is always correct
-                    };
+            // VALIDATION 1: Empty Question
+            if (!questionText) {
+                errors.push({
+                    msg: "Question text is missing/empty",
+                    context: "Block #" + index
                 });
-
-                parsedQuestions.push({
-                    q: questionText,
-                    v: variants
-                });
+                return;
             }
+
+            // VALIDATION 2: STRICT 5 VARIANTS
+            if (variantsRaw.length !== 5) {
+                // Create a snippet of the question for context (max 60 chars)
+                const snippet = questionText.length > 60 ? questionText.substring(0, 60) + "..." : questionText;
+                errors.push({
+                    msg: `Found ${variantsRaw.length} variants. Strictly 5 required.`,
+                    context: snippet
+                });
+                return;
+            }
+
+            // VALIDATION 3: Empty Variants check (optional but recommended)
+            const variants = variantsRaw.map((v, vIndex) => {
+                return {
+                    text: v.trim(),
+                    isCorrect: vIndex === 0 // Requirement: First variant is always correct
+                };
+            });
+
+            if (variants.some(v => v.text === "")) {
+                const snippet = questionText.length > 60 ? questionText.substring(0, 60) + "..." : questionText;
+                errors.push({
+                    msg: "One or more variants are empty.",
+                    context: snippet
+                });
+                return;
+            }
+
+            parsedQuestions.push({
+                q: questionText,
+                v: variants
+            });
         });
 
-        return parsedQuestions;
+        if (errors.length > 0) {
+            return { success: false, errors: errors };
+        }
+
+        return { success: true, data: parsedQuestions };
+    },
+
+    showErrors: function(fileName, errors) {
+        const modal = document.getElementById('modal-error');
+        const list = document.getElementById('error-list');
+        const intro = document.getElementById('error-intro-text');
+        
+        intro.innerText = `File "${fileName}" contains ${errors.length} error(s). Import cancelled.`;
+        list.innerHTML = '';
+
+        errors.forEach(err => {
+            const item = document.createElement('div');
+            item.className = 'error-item';
+            item.innerHTML = `
+                <div class="error-title">${err.msg}</div>
+                <div class="error-context">${err.context.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+            `;
+            list.appendChild(item);
+        });
+
+        modal.classList.remove('hidden');
     },
 
     /**
@@ -493,43 +565,27 @@ const app = {
         session.answers[session.currentIndex] = isCorrect;
         if (isCorrect) session.score++;
 
-        // --- NEW LOGIC START: Re-insert incorrect questions in Cram Mode ---
+        // Cram Mode: Re-insert incorrect questions
         if (!isCorrect && session.mode === 'cram') {
             const currentQ = session.questions[session.currentIndex];
             
-            // Calculate where to insert the question
-            // We want it at least 2 steps ahead (if possible), but not past the end
             const remainingQuestions = session.questions.length - (session.currentIndex + 1);
             let insertIndex;
 
             if (remainingQuestions <= 0) {
-                // If this was the last question, append to end
                 insertIndex = session.questions.length;
             } else {
-                // Insert randomly between (Current + 2) and (End of Array)
-                // This creates a "buffer" so they don't see it immediately
                 const minOffset = 2; 
                 const maxOffset = remainingQuestions;
-                
-                // Ensure min isn't larger than max (if only 1 question left)
                 const safeMin = Math.min(minOffset, maxOffset);
-                
                 const randomOffset = Math.floor(Math.random() * (maxOffset - safeMin + 1)) + safeMin;
                 insertIndex = session.currentIndex + 1 + randomOffset;
             }
 
-            // Insert the question copy into the array
             session.questions.splice(insertIndex, 0, currentQ);
-            
-            // Insert a placeholder in the answers array to keep indices synced
             session.answers.splice(insertIndex, 0, null);
-
-            // Optional: Update the counter immediately to show the user the test got longer
             document.getElementById('quiz-counter').innerText = `${session.currentIndex + 1} / ${session.questions.length}`;
-            
-            console.log(`Incorrect answer. Question re-queued at index ${insertIndex}`);
         }
-        // --- NEW LOGIC END ---
 
         const buttons = document.querySelectorAll('.variant-btn');
 
