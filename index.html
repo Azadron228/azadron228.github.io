@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test</title>
+    <title>Тестирование</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -99,10 +99,10 @@
 <body>
 
     <header>
-        <h1 onclick="app.navigate('home')" style="cursor: pointer;">Test</h1>
+        <h1 onclick="app.navigate('home')" style="cursor: pointer;">Тесты</h1>
         <nav>
-            <button class="btn btn-outline" onclick="app.navigate('settings')">Settings</button>
-            <button class="btn btn-primary" onclick="app.navigate('home')">Tests</button>
+            <button class="btn btn-outline" onclick="app.navigate('settings')">Настройки</button>
+            <button class="btn btn-primary" onclick="app.navigate('home')">Главная</button>
         </nav>
     </header>
 
@@ -110,46 +110,46 @@
         
         <section id="view-home">
             <div class="card upload-zone" onclick="document.getElementById('fileInput').click()">
-                <h3>Click to Upload Test Files</h3>
-                <p style="color: var(--text-light)">Format: &lt;question&gt;...&lt;variant&gt;... (5 variants required)</p>
+                <h3>Нажмите для загрузки файла теста</h3>
+                <p style="color: var(--text-light)">Формат: &lt;question&gt;...&lt;variant&gt;... (нужно 5 вариантов)</p>
                 <input type="file" id="fileInput" multiple accept=".txt,.html,.xml" style="display: none" onchange="app.handleFileUpload(this)">
             </div>
 
             <div class="card">
-                <h2>My Tests</h2>
+                <h2>Мои Тесты</h2>
                 <div id="test-list-container">
-                    <p style="text-align: center; color: var(--text-light); padding: 1rem;">No tests uploaded yet.</p>
+                    <p style="text-align: center; color: var(--text-light); padding: 1rem;">Тесты еще не загружены.</p>
                 </div>
             </div>
         </section>
 
         <section id="view-settings" class="hidden">
             <div class="card">
-                <h2>Global Settings</h2>
+                <h2>Глобальные настройки</h2>
                 
                 <div class="setting-row">
-                    <label>Questions per Cram Chunk</label>
+                    <label>Вопросов в блоке заучивания</label>
                     <input type="number" id="setting-cram-size" value="60" min="10">
                 </div>
                 
                 <div class="setting-row">
-                    <label>Questions in Test Mode</label>
+                    <label>Вопросов в режиме теста</label>
                     <input type="number" id="setting-test-size" value="30" min="5">
                 </div>
                 
                 <div class="setting-row">
-                    <label>Shuffle Variants</label>
+                    <label>Перемешивать варианты</label>
                     <input type="checkbox" id="setting-shuffle-variants" checked>
                 </div>
                 
                 <div class="setting-row">
-                    <label>Show Answer Immediately</label>
+                    <label>Показывать ответ сразу</label>
                     <input type="checkbox" id="setting-instant-feedback" checked>
                 </div>
 
                 <div style="margin-top: 1.5rem; text-align: right;">
-                    <button class="btn btn-primary" onclick="app.saveSettings()">Save Settings</button>
-                    <button class="btn btn-outline" onclick="app.clearData()">Clear All Data</button>
+                    <button class="btn btn-primary" onclick="app.saveSettings()">Сохранить</button>
+                    <button class="btn btn-outline" onclick="app.clearData()">Стереть все данные</button>
                 </div>
             </div>
         </section>
@@ -157,7 +157,7 @@
         <section id="view-quiz" class="hidden">
             <div class="card">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                    <span id="quiz-mode-label" style="font-weight: bold; color: var(--primary);">Mode</span>
+                    <span id="quiz-mode-label" style="font-weight: bold; color: var(--primary);">Режим</span>
                     <span id="quiz-counter">1 / 30</span>
                 </div>
                 
@@ -166,24 +166,24 @@
                 </div>
 
                 <div id="question-container">
-                    <div id="question-text" class="question-text">Loading...</div>
+                    <div id="question-text" class="question-text">Загрузка...</div>
                     <div id="variants-container" class="variants-list">
                         </div>
                 </div>
 
                 <div class="quiz-controls">
-                    <button class="btn btn-outline" onclick="app.quitQuiz()">Quit</button>
-                    <button id="btn-next" class="btn btn-primary hidden" onclick="app.nextQuestion()">Next Question</button>
+                    <button class="btn btn-outline" onclick="app.quitQuiz()">Выйти</button>
+                    <button id="btn-next" class="btn btn-primary hidden" onclick="app.nextQuestion()">Следующий вопрос</button>
                 </div>
             </div>
         </section>
 
         <section id="view-results" class="hidden">
             <div class="card" style="text-align: center; padding: 3rem;">
-                <h2>Test Complete!</h2>
+                <h2>Тест завершен!</h2>
                 <h1 style="font-size: 3rem; color: var(--primary); margin: 1rem 0;" id="result-score">85%</h1>
-                <p id="result-details" style="margin-bottom: 2rem;">You got 25 out of 30 correct.</p>
-                <button class="btn btn-primary" onclick="app.navigate('home')">Back to Home</button>
+                <p id="result-details" style="margin-bottom: 2rem;">Вы ответили верно на 25 из 30 вопросов.</p>
+                <button class="btn btn-primary" onclick="app.navigate('home')">На главную</button>
             </div>
         </section>
 
@@ -191,23 +191,23 @@
 
     <div id="modal-chunk" class="modal-overlay hidden">
         <div class="modal">
-            <h3>Select a Study Chunk</h3>
-            <p>This test is large. Select a range to study:</p>
+            <h3>Выберите блок для изучения</h3>
+            <p>Тест большой. Выберите диапазон вопросов:</p>
             <div id="chunk-list" class="chunk-grid"></div>
             <div style="margin-top: 1rem; text-align: right;">
-                <button class="btn btn-outline" onclick="document.getElementById('modal-chunk').classList.add('hidden')">Cancel</button>
+                <button class="btn btn-outline" onclick="document.getElementById('modal-chunk').classList.add('hidden')">Отмена</button>
             </div>
         </div>
     </div>
 
     <div id="modal-error" class="modal-overlay hidden">
         <div class="modal" style="border-top: 4px solid var(--error);">
-            <h3 style="color: var(--error)">Upload Failed</h3>
-            <p id="error-intro-text">The file contained errors:</p>
+            <h3 style="color: var(--error)">Ошибка загрузки</h3>
+            <p id="error-intro-text">В файле найдены ошибки:</p>
             <div id="error-list" class="error-list">
                 </div>
             <div style="margin-top: 1rem; text-align: right;">
-                <button class="btn btn-primary" onclick="document.getElementById('modal-error').classList.add('hidden')">Close</button>
+                <button class="btn btn-primary" onclick="document.getElementById('modal-error').classList.add('hidden')">Закрыть</button>
             </div>
         </div>
     </div>
@@ -260,7 +260,7 @@ const app = {
     },
 
     clearData: function() {
-        if(confirm("Are you sure? This will delete all tests and history.")) {
+        if(confirm("Вы уверены? Это удалит все тесты и историю.")) {
             localStorage.removeItem('studyflow_data');
             location.reload();
         }
@@ -322,8 +322,8 @@ const app = {
             // VALIDATION 1: Empty Question
             if (!questionText) {
                 errors.push({
-                    msg: "Question text is missing/empty",
-                    context: "Block #" + index
+                    msg: "Текст вопроса отсутствует",
+                    context: "Блок #" + index
                 });
                 return;
             }
@@ -333,7 +333,7 @@ const app = {
                 // Create a snippet of the question for context (max 60 chars)
                 const snippet = questionText.length > 60 ? questionText.substring(0, 60) + "..." : questionText;
                 errors.push({
-                    msg: `Found ${variantsRaw.length} variants. Strictly 5 required.`,
+                    msg: `Найдено ${variantsRaw.length} вариантов. Строго требуется 5.`,
                     context: snippet
                 });
                 return;
@@ -350,7 +350,7 @@ const app = {
             if (variants.some(v => v.text === "")) {
                 const snippet = questionText.length > 60 ? questionText.substring(0, 60) + "..." : questionText;
                 errors.push({
-                    msg: "One or more variants are empty.",
+                    msg: "Один или несколько вариантов пустые.",
                     context: snippet
                 });
                 return;
@@ -374,7 +374,7 @@ const app = {
         const list = document.getElementById('error-list');
         const intro = document.getElementById('error-intro-text');
         
-        intro.innerText = `File "${fileName}" contains ${errors.length} error(s). Import cancelled.`;
+        intro.innerText = `Файл "${fileName}" содержит ${errors.length} ошибок. Импорт отменен.`;
         list.innerHTML = '';
 
         errors.forEach(err => {
@@ -398,7 +398,7 @@ const app = {
         container.innerHTML = '';
 
         if (this.data.tests.length === 0) {
-            container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 1rem;">No tests uploaded yet.</p>';
+            container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 1rem;">Тесты еще не загружены.</p>';
             return;
         }
 
@@ -412,13 +412,13 @@ const app = {
                 <div>
                     <h3 class="test-title">${test.name}</h3>
                     <div style="font-size: 0.9rem; color: var(--text-light)">
-                        ${test.questions.length} Questions 
-                        ${lastAttempt ? `| Last score: ${Math.round((lastAttempt.score/lastAttempt.total)*100)}%` : ''}
+                        Вопросов: ${test.questions.length} 
+                        ${lastAttempt ? `| Последний рез-т: ${Math.round((lastAttempt.score/lastAttempt.total)*100)}%` : ''}
                     </div>
                 </div>
                 <div class="test-actions">
-                    <button class="btn btn-outline" onclick="app.prepCram('${test.id}')">Cram</button>
-                    <button class="btn btn-primary" onclick="app.prepTest('${test.id}')">Test</button>
+                    <button class="btn btn-outline" onclick="app.prepCram('${test.id}')">Учить</button>
+                    <button class="btn btn-primary" onclick="app.prepTest('${test.id}')">Тест</button>
                     <button class="btn btn-icon" style="color:var(--error)" onclick="app.deleteTest('${test.id}')">&times;</button>
                 </div>
             `;
@@ -427,7 +427,7 @@ const app = {
     },
 
     deleteTest: function(id) {
-        if(confirm("Delete this test?")) {
+        if(confirm("Удалить этот тест?")) {
             this.data.tests = this.data.tests.filter(t => t.id !== id);
             this.data.history = this.data.history.filter(h => h.testId !== id);
             this.saveStorage();
@@ -452,7 +452,6 @@ const app = {
         this.settings.instantFeedback = document.getElementById('setting-instant-feedback').checked;
         
         this.saveStorage();
-        //alert("Settings saved!");
         this.navigate('home');
     },
 
@@ -468,8 +467,10 @@ const app = {
         const chunks = Math.ceil(totalQ / chunkSize);
 
         if (chunks <= 1) {
-            // Only one chunk, start immediately
-            this.startSession(testId, test.questions, 'cram');
+            // Only one chunk, start immediately, BUT SHUFFLE FIRST
+            let questions = JSON.parse(JSON.stringify(test.questions));
+            this.shuffleArray(questions);
+            this.startSession(testId, questions, 'cram');
             return;
         }
 
@@ -481,9 +482,11 @@ const app = {
             const end = Math.min((i + 1) * chunkSize, totalQ);
             const btn = document.createElement('button');
             btn.className = 'btn btn-outline';
-            btn.innerText = `Q ${start + 1} - ${end}`;
+            btn.innerText = `В. ${start + 1} - ${end}`;
             btn.onclick = () => {
-                const subset = test.questions.slice(start, end);
+                let subset = test.questions.slice(start, end);
+                // SHUFFLE THE CHUNK
+                this.shuffleArray(subset); 
                 document.getElementById('modal-chunk').classList.add('hidden');
                 this.startSession(testId, subset, 'cram');
             };
@@ -507,7 +510,7 @@ const app = {
     startSession: function(testId, questions, mode) {
         this.currentSession = {
             testId: testId,
-            questions: JSON.parse(JSON.stringify(questions)), // Deep copy to avoid mutating original
+            questions: JSON.parse(JSON.stringify(questions)), // Deep copy
             currentIndex: 0,
             score: 0,
             answers: new Array(questions.length).fill(null),
@@ -526,7 +529,7 @@ const app = {
         const qData = session.questions[session.currentIndex];
         
         // Update Header
-        document.getElementById('quiz-mode-label').innerText = session.mode === 'cram' ? 'Cram Mode' : 'Test Mode';
+        document.getElementById('quiz-mode-label').innerText = session.mode === 'cram' ? 'Заучивание' : 'Тест';
         document.getElementById('quiz-counter').innerText = `${session.currentIndex + 1} / ${session.questions.length}`;
         document.getElementById('quiz-progress').style.width = `${((session.currentIndex) / session.questions.length) * 100}%`;
 
@@ -537,7 +540,7 @@ const app = {
         const vContainer = document.getElementById('variants-container');
         vContainer.innerHTML = '';
 
-        // Clone variants to shuffle if needed, without losing "isCorrect" flag
+        // Clone variants to shuffle if needed
         let variants = [...qData.v];
         if (this.settings.shuffleVariants) {
             this.shuffleArray(variants);
@@ -640,13 +643,13 @@ const app = {
 
         // Render Results
         document.getElementById('result-score').innerText = `${percentage}%`;
-        document.getElementById('result-details').innerText = `You got ${session.score} out of ${session.questions.length} correct.`;
+        document.getElementById('result-details').innerText = `Верно: ${session.score} из ${session.questions.length}.`;
         
         this.navigate('results');
     },
 
     quitQuiz: function() {
-        if(confirm("Quit current session? Progress will be lost.")) {
+        if(confirm("Выйти? Прогресс будет потерян.")) {
             this.navigate('home');
         }
     },
